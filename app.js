@@ -4,6 +4,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
+const passport = require('passport');
+const session = require('express-session');
+require('dotenv').config();
+require('./auth');
 
 const homeStartingContent = "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
 const aboutContent = "Hac habitasse platea dictumst vestibulum rhoncus est pellentesque. Dictumst vestibulum rhoncus est pellentesque elit ullamcorper. Non diam phasellus vestibulum lorem sed. Platea dictumst quisque sagittis purus sit. Egestas sed sed risus pretium quam vulputate dignissim suspendisse. Mauris in aliquam sem fringilla. Semper risus in hendrerit gravida rutrum quisque non tellus orci. Amet massa vitae tortor condimentum lacinia quis vel eros. Enim ut tellus elementum sagittis vitae. Mauris ultrices eros in cursus turpis massa tincidunt dui.";
@@ -16,7 +20,10 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-mongoose.connect("mongodb+srv://preetam3620:preetam3620@cluster0.ogwqe.mongodb.net/blogDB?retryWrites=true&w=majority&appName=Cluster0", {useNewUrlParser: true});
+mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true});
+app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 const postSchema = new mongoose.Schema({
   title: {type: String},
@@ -25,6 +32,12 @@ const postSchema = new mongoose.Schema({
 
 const Post = mongoose.model("Post", postSchema);
 
+app.post('/auth/login', passport.authenticate('azuread-openidconnect', { failureRedirect: '/' }));
+
+app.get('/auth/callback',
+    passport.authenticate('azuread-openidconnect', { failureRedirect: '/' }),
+    (req, res) => res.redirect('/dashboard')
+);
 app.get("/login", (req, res) => {
   res.render("test");
 });
@@ -71,6 +84,17 @@ const requestedPostId = req.params.postId;
   }
 });
 
+app.get("/delete/:postId", async (req, res) => {
+  const requestedPostId = req.params.postId;
+  try {
+    await Post.findByIdAndDelete(requestedPostId);
+    res.redirect("/");
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ message: "Failed to delete post" });
+  }
+});
+
 app.get("/about", function(req, res){
   res.render("about", {aboutContent: aboutContent});
 });
@@ -80,6 +104,6 @@ app.get("/contact", function(req, res){
 });
 
 
-app.listen(3000, function() {
+app.listen(process.env.PORT || 3000, function() {
   console.log("Server started on port 3000");
 });
