@@ -1,15 +1,14 @@
 <%- include("partials/header"); -%>
-    <h1>Home</h1>
-    <p> <%= startingContent %> </p>
 
+  <div class="container-fluid" style="display: flex; justify-content: center; align-items: center;">
+    <div class="login-container">
+      <h2>Login</h2>
+      <form action="#" method="POST">
+        <input type="text" class="input-field" placeholder="Username" required>
+        <input type="password" class="input-field" placeholder="Password" required>
+        <button type="submit" class="login-btn">Login</button>
+      </form>
+    </div>
+  </div>
 
-  <%  posts.forEach(function(post){ %>
-
-    <h1><%=post.title%></h1>
-    <p>
-    <%=post.content.substring(0, 100) + " ..."%>
-    <a href="/posts/<%=post.title%>">Read More</a>
-    </p>
-
-
-    <% }) %>
+  <%- include("partials/footer"); -%>

@@ -16,54 +16,59 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-mongoose.connect("mongodb://localhost:27017/blogDB", {useNewUrlParser: true});
+mongoose.connect("mongodb+srv://preetam3620:preetam3620@cluster0.ogwqe.mongodb.net/blogDB?retryWrites=true&w=majority&appName=Cluster0", {useNewUrlParser: true});
 
-const postSchema = {
-  title: String,
-  content: String
-};
+const postSchema = new mongoose.Schema({
+  title: {type: String},
+  content: {type: String}
+});
 
 const Post = mongoose.model("Post", postSchema);
 
-app.get("/", function(req, res){
+app.get("/login", (req, res) => {
+  res.render("test");
+});
 
-  Post.find({}, function(err, posts){
+app.get("/", async (req, res) => {
+  try {
+    const _posts = await Post.find();
     res.render("home", {
       startingContent: homeStartingContent,
-      posts: posts
-      });
-  });
+      posts: _posts
+    });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 app.get("/compose", function(req, res){
   res.render("compose");
 });
 
-app.post("/compose", function(req, res){
+app.post("/compose", async (req, res) =>{
   const post = new Post({
     title: req.body.postTitle,
     content: req.body.postBody
   });
-
-
-  post.save(function(err){
-    if (!err){
-        res.redirect("/");
-    }
-  });
+  try {
+    const _posts = await post.save();
+    res.redirect("/");
+  } catch (error) {
+    console.log(error);
+  }
 });
 
-app.get("/posts/:postId", function(req, res){
-
+app.get("/posts/:postId", async (req, res) => {
 const requestedPostId = req.params.postId;
-
-  Post.findOne({_id: requestedPostId}, function(err, post){
+  try {
+    const _post = await Post.findById(requestedPostId);
     res.render("post", {
-      title: post.title,
-      content: post.content
+      title: _post.title,
+      content: _post.content
     });
-  });
-
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 app.get("/about", function(req, res){
